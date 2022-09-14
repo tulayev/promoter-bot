@@ -11,6 +11,6 @@ namespace PromoterBot.Data
 
         public DbSet<Promoter> Promoters { get; set; }
         
-        //public DbSet<Participant> Participants { get; set; }
+        public DbSet<Participant> Participants { get; set; }
     }
 }

@@ -50,21 +50,19 @@ namespace PromoterBot
             var contact = Context.Update.Message.Contact;
 
             if (contact is null)
-            {
-                await Send("Unknown command!");
                 return;
-            }
 
             await Send($"Ваш номер: {contact.PhoneNumber}");
             _promoter.PhoneNumber = contact.PhoneNumber;
 
             await EnterName();
+            Context.StopHandling(); 
         }
 
         [Action]
         private async Task EnterName()
         {
-            await Send($"Пожалуйста, введите своё имя.");
+            await Send($"Пожалуйста, введите своё Ф.И.О.");
 
             string name = await AwaitText();
             _promoter.Name = name;
@@ -72,7 +70,7 @@ namespace PromoterBot
 
             Button("Назад");
             Button("Вперёд");
-            await Send($"Ваше имя: {name}!");
+            await Send($"Ваше Ф.И.О.: {name}!");
             string btn = await AwaitQuery();
 
 

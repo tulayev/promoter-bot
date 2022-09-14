@@ -27,6 +27,8 @@ namespace PromoterBot
 
                 PushL($"File {file.FilePath!} has been downloaded to {filePath}");
             }
+
+            Context.StopHandling();
         }
     }
 }
