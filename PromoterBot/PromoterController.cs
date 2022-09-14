@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using PromoterBot.Data;
 using PromoterBot.Models;
 using Telegram.Bot.Types.Enums;
+using Telegram.Bot.Types.ReplyMarkups;
 
 namespace PromoterBot
 {
@@ -32,54 +33,62 @@ namespace PromoterBot
             }
             else
             {
-                await EnterName();
+                RequestContact();
             }
+        }
+
+        [Action]
+        private void RequestContact()
+        {
+            PushL($"Пожалуйста, введите свой номер телефона.");
+            RowKButton(KeyboardButton.WithRequestContact("Поделиться номером"));
+        }
+
+        [On(Handle.Unknown)]
+        public async Task HandleContact()
+        {
+            var contact = Context.Update.Message.Contact;
+
+            if (contact is null)
+            {
+                await Send("Unknown command!");
+                return;
+            }
+
+            await Send($"Ваш номер: {contact.PhoneNumber}");
+            _promoter.PhoneNumber = contact.PhoneNumber;
+
+            await EnterName();
         }
 
         [Action]
         private async Task EnterName()
         {
-            _promoter.ChatId = Context.GetChatId().ToString();
-
             await Send($"Пожалуйста, введите своё имя.");
 
             string name = await AwaitText();
+            _promoter.Name = name;
+            _promoter.ChatId = Context.GetChatId().ToString();
 
             Button("Назад");
             Button("Вперёд");
             await Send($"Ваше имя: {name}!");
             string btn = await AwaitQuery();
-            _promoter.Name = name;
+
 
             if (btn == "Назад")
                 await EnterName();
             else
-                await EnterPhone();
-        }
-
-        [Action]
-        private async Task EnterPhone()
-        {
-            await Send($"Пожалуйста, введите свой номер телефона.");
-            string phone = await AwaitText();
-
-            Button("Назад");
-            Button("Вперёд");
-            await Send($"Ваш номер: {phone}");
-            string btn = await AwaitQuery();
-            _promoter.PhoneNumber = Int32.Parse(phone);
-
-            if (btn == "Назад")
-                await EnterPhone();
-            else
                 await EnterCity();
         }
-        
+
         [Action]
         private async Task EnterCity()
         {
             await Send($"Пожалуйста, введите свой город.");
             string city = await AwaitText();
+
+            _promoter.City = city;
 
             Button("Назад");
             Button("Вперёд");
@@ -90,22 +99,12 @@ namespace PromoterBot
             if (btn == "Назад")
                 await EnterCity();
             else
-                await Save();
-        }
-
-        [Action]
-        private async Task Save()
-        {
-            _ctx.Promoters.Add(_promoter);
-            await _ctx.SaveChangesAsync();
-            await Send("Регистрация прошла успешно!");
-        }
-
-        [On(Handle.Unknown)]
-        public async Task Unknown()
-        {
-            PushL("unknown");
-            await Send();
+            {
+                _ctx.Promoters.Add(_promoter);
+                await _ctx.SaveChangesAsync();
+                await Send("Регистрация прошла успешно!");
+                await Start();
+            }
         }
 
         [On(Handle.Exception)]
