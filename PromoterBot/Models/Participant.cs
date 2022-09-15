@@ -18,7 +18,7 @@
 
         public string SocialNetwork { get; set; }
 
-        public string Images { get; set; }
+        public string Image { get; set; }
 
         public int PromoterId { get; set; }
 

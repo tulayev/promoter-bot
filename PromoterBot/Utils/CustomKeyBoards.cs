@@ -8,18 +8,35 @@ namespace PromoterBot.Utils
         {
             return types switch
             {
-                KeyBoardTypes.Default => new ReplyKeyboardMarkup(new[]
+                KeyBoardTypes.GenderSelect => new ReplyKeyboardMarkup(new[]
                 {
-                    new KeyboardButton("Назад"),
-                    new KeyboardButton("Вперёд")
+                    new KeyboardButton("Мужской"),
+                    new KeyboardButton("Женский")
                 })
                 {
                     ResizeKeyboard = true
                 },
-                _ => throw new Exception()
+                KeyBoardTypes.SocilaNetWorkSelect => new ReplyKeyboardMarkup(new[]
+                {
+                    new KeyboardButton("Telegram"),
+                    new KeyboardButton("Facebook"),
+                    new KeyboardButton("Instagram"),
+                    new KeyboardButton("Youtube"),
+                    new KeyboardButton("Другой")
+                })
+                {
+                    ResizeKeyboard = true
+                },
+                _ => new ReplyKeyboardMarkup(new[]
+                {
+                    new KeyboardButton("Отмена")
+                })
+                {
+                    ResizeKeyboard = true
+                },
             };
         }
     }
 
-    public enum KeyBoardTypes { Default }
+    public enum KeyBoardTypes { Default, GenderSelect, SocilaNetWorkSelect }
 }
