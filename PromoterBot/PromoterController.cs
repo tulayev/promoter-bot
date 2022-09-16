@@ -13,12 +13,15 @@ namespace PromoterBot
 
         private readonly DataContext _ctx;
 
+        private readonly IConfiguration _config;
+
         private readonly Promoter _promoter = new();
 
-        public PromoterController(ILogger<Program> logger, DataContext ctx)
+        public PromoterController(ILogger<Program> logger, DataContext ctx, IConfiguration config)
         {
             _logger = logger;
             _ctx = ctx;
+            _config = config;
         }
 
         [Action("/start", "Начать!")]
@@ -26,7 +29,12 @@ namespace PromoterBot
         {
             var promoters = await _ctx.Promoters.ToListAsync();
 
-            if (promoters.Any(p => p.ChatId == Context.GetChatId().ToString()))
+            if (_config["AdminId"] == Context.GetChatId().ToString())
+            {
+                PushL("Нажмите на кнопку, чтобы войти в панель админа");
+                RowKButton(Q<AdminController>(c => c.Start));
+            }
+            else if (promoters.Any(p => p.ChatId == Context.GetChatId().ToString()))
             {
                 PushL("Нажмите на кнопку, чтобы добавить участника!");
                 RowKButton(Q<ParticipantController>(c => c.Add));

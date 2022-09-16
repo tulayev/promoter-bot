@@ -11,6 +11,8 @@ namespace PromoterBot.Extensions
                 options.UseSqlite(config.GetConnectionString("Default"));
             });
 
+            services.AddAutoMapper(typeof(Program).Assembly);
+
             return services;
         }
     }
