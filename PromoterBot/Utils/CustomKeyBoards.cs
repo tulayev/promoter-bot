@@ -28,7 +28,7 @@ namespace PromoterBot.Utils
                     new KeyboardButton[]
                     {
                         new KeyboardButton("Youtube"),
-                        new KeyboardButton("Другой")
+                        new KeyboardButton(Dictionaries.Commands["Other"])
                     }
                 })
                 {
@@ -36,15 +36,24 @@ namespace PromoterBot.Utils
                 },
                 KeyBoardTypes.AdminPanel => new ReplyKeyboardMarkup(new[]
                 {
-                    new KeyboardButton("Скачать таблицу промоутеров"),
-                    new KeyboardButton("Скачать таблицу участников")
+                    new KeyboardButton[]
+                    {
+                        new KeyboardButton(Dictionaries.Commands["DownloadPromoters"]),
+                        new KeyboardButton(Dictionaries.Commands["DownloadParticipants"])
+                    },
+                    new KeyboardButton[]
+                    {
+                        new KeyboardButton(Dictionaries.Commands["AddRegion"]),
+                        new KeyboardButton(Dictionaries.Commands["AddCity"]),
+                        new KeyboardButton(Dictionaries.Commands["DownloadPhoto"])
+                    },
                 })
                 {
                     ResizeKeyboard = true
                 },
                 _ => new ReplyKeyboardMarkup(new[]
                 {
-                    new KeyboardButton("Отмена")
+                    new KeyboardButton(Dictionaries.Commands["Cancel"])
                 })
                 {
                     ResizeKeyboard = true
@@ -60,8 +69,8 @@ namespace PromoterBot.Utils
                 source.Skip(3).Select(x => new KeyboardButton(x.Name)),
                 new KeyboardButton[]
                 {
-                    new KeyboardButton("Назад"),
-                    new KeyboardButton("Вперёд")
+                    new KeyboardButton(Dictionaries.Commands["Prev"]),
+                    new KeyboardButton(Dictionaries.Commands["Next"])
                 }
             })
             {
