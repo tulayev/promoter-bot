@@ -18,7 +18,7 @@ namespace PromoterBot
         private readonly IWebHostEnvironment _env;
 
         private readonly DataContext _ctx;
-
+        
         private readonly Participant _participant = new();
 
         private const int PageSize = 6;
@@ -33,7 +33,7 @@ namespace PromoterBot
         [Action("Добавить участника")]
         public async Task Add()
         {
-            await Send("Пожалуйста, отправьте фото участника");
+            await Send(Dictionaries.Requests["RequestPhoto"]);
         }
 
         [Action]
@@ -41,7 +41,7 @@ namespace PromoterBot
         {
             await Client.SendTextMessageAsync(
                chatId: Context.GetSafeChatId(),
-               text: "Пожалуйста, введите Ф.И.О. участника",
+               text: Dictionaries.Requests["RequestName"],
                replyMarkup: CustomKeyBoards.GetKeyboard(KeyBoardTypes.Default)
             );
 
@@ -55,15 +55,19 @@ namespace PromoterBot
             
             _participant.Name = input;
 
-            Button("Назад");
-            Button("Вперёд");
+            Button(Dictionaries.Commands["Prev"]);
+            Button(Dictionaries.Commands["Next"]);
             await Send($"Ф.И.О. участника: {input}!");
             string btn = await AwaitQuery();
 
-            if (btn == "Назад")
+            if (btn == Dictionaries.Commands["Prev"])
+            {
                 await EnterName();
+            }
             else
+            {
                 await EnterPhoneNumber();
+            }
         }
 
         [Action]
@@ -71,7 +75,7 @@ namespace PromoterBot
         {
             await Client.SendTextMessageAsync(
                chatId: Context.GetSafeChatId(),
-               text: "Пожалуйста, введите номер телефона участника в формате +998XXXXXXXXX",
+               text: Dictionaries.Requests["RequestPhoneNumber"],
                replyMarkup: CustomKeyBoards.GetKeyboard(KeyBoardTypes.Default)
             );
 
@@ -88,15 +92,19 @@ namespace PromoterBot
 
             _participant.PhoneNumber = input;
 
-            Button("Назад");
-            Button("Вперёд");
+            Button(Dictionaries.Commands["Prev"]);
+            Button(Dictionaries.Commands["Next"]);
             await Send($"Номер телефона участника: {input}");
             string btn = await AwaitQuery();
 
-            if (btn == "Назад" || !match.Success)
+            if (btn == Dictionaries.Commands["Prev"] || !match.Success)
+            {
                 await EnterPhoneNumber();
+            }
             else
+            {
                 await EnterAge();
+            }
         }
 
         [Action]
@@ -104,7 +112,7 @@ namespace PromoterBot
         {
             await Client.SendTextMessageAsync(
                chatId: Context.GetSafeChatId(),
-               text: "Пожалуйста, введите возраст участника",
+               text: Dictionaries.Requests["RequestAge"],
                replyMarkup: CustomKeyBoards.GetKeyboard(KeyBoardTypes.Default)
             );
             
@@ -118,13 +126,15 @@ namespace PromoterBot
 
             bool isValid = Int32.TryParse(input, out int res);
 
-            Button("Назад");
-            Button("Вперёд");
+            Button(Dictionaries.Commands["Prev"]);
+            Button(Dictionaries.Commands["Next"]);
             await Send($"Возраст участника: {input}!");
             string btn = await AwaitQuery();
 
-            if (btn == "Назад" || !isValid)
+            if (btn == Dictionaries.Commands["Prev"] || !isValid)
+            {
                 await EnterAge();
+            }
             else
             {
                 _participant.Age = res;
@@ -137,7 +147,7 @@ namespace PromoterBot
         {
             await Client.SendTextMessageAsync(
                 chatId: Context.GetSafeChatId(),
-                text: "Выберите пол участника",
+                text: Dictionaries.Requests["RequestGender"],
                 replyMarkup: CustomKeyBoards.GetKeyboard(KeyBoardTypes.GenderSelect)
             );
 
@@ -145,15 +155,19 @@ namespace PromoterBot
 
             _participant.Gender = input;
 
-            Button("Назад");
-            Button("Вперёд");
+            Button(Dictionaries.Commands["Prev"]);
+            Button(Dictionaries.Commands["Next"]);
             await Send($"Пол участника: {input}!");
             string btn = await AwaitQuery();
 
-            if (btn == "Назад")
+            if (btn == Dictionaries.Commands["Prev"])
+            {
                 await EnterGender();
+            }
             else
+            {
                 await ChooseRegion();
+            }
         }
 
         [Action]
@@ -165,7 +179,7 @@ namespace PromoterBot
 
             await Client.SendTextMessageAsync(
                chatId: Context.GetSafeChatId(),
-               text: "Пожалуйста, выберите район",
+               text: Dictionaries.Requests["RequestRegion"],
                replyMarkup: CustomKeyBoards.GetKeyboard(regions)
             );
 
@@ -173,15 +187,16 @@ namespace PromoterBot
 
             string input = await AwaitText();
 
-            if (pageDto.HasPreviousPage && input == "Назад")
+            if (pageDto.HasPreviousPage && input == Dictionaries.Commands["Prev"])
             {
                 await ChooseRegion(--page);
             }
-            else if (pageDto.HasNextPage && input == "Вперёд")
+            else if (pageDto.HasNextPage && input == Dictionaries.Commands["Next"])
             {
                 await ChooseRegion(++page);
             }
-            else if ((!pageDto.HasPreviousPage && input == "Назад") || (!pageDto.HasNextPage && input == "Вперёд"))
+            else if ((!pageDto.HasPreviousPage && input == Dictionaries.Commands["Prev"]) || 
+                (!pageDto.HasNextPage && input == Dictionaries.Commands["Next"]))
             {
                 await ChooseRegion(page);
             }
@@ -200,7 +215,7 @@ namespace PromoterBot
 
             await Client.SendTextMessageAsync(
                chatId: Context.GetSafeChatId(),
-               text: "Пожалуйста, выберите город",
+               text: Dictionaries.Requests["RequestCity"],
                replyMarkup: CustomKeyBoards.GetKeyboard(cities)
             );
 
@@ -208,15 +223,16 @@ namespace PromoterBot
 
             string input = await AwaitText();
 
-            if (pageDto.HasPreviousPage && input == "Назад")
+            if (pageDto.HasPreviousPage && input == Dictionaries.Commands["Prev"])
             {
                 await ChooseCity(region, --page);
             }
-            else if (pageDto.HasNextPage && input == "Вперёд")
+            else if (pageDto.HasNextPage && input == Dictionaries.Commands["Next"])
             {
                 await ChooseCity(region, ++page);
             }
-            else if ((!pageDto.HasPreviousPage && input == "Назад") || (!pageDto.HasNextPage && input == "Вперёд"))
+            else if ((!pageDto.HasPreviousPage && input == Dictionaries.Commands["Prev"]) || 
+                (!pageDto.HasNextPage && input == Dictionaries.Commands["Next"]))
             {
                 await ChooseCity(region, page);
             }
@@ -231,13 +247,13 @@ namespace PromoterBot
         {
             await Client.SendTextMessageAsync(
                chatId: Context.GetSafeChatId(),
-               text: "Выберите прелпочитаемую соц. сети участника",
+               text: Dictionaries.Requests["RequestSocialNetwork"],
                replyMarkup: CustomKeyBoards.GetKeyboard(KeyBoardTypes.SocilaNetWorkSelect)
             );
 
             string input = await AwaitText();
 
-            if (input == "Другой")
+            if (input == Dictionaries.Commands["Other"])
             {
                 await Send("Введите вручную соц. сеть:");
                 input = await AwaitText();
@@ -245,15 +261,19 @@ namespace PromoterBot
 
             _participant.SocialNetwork = input;
 
-            Button("Назад");
-            Button("Вперёд");
+            Button(Dictionaries.Commands["Prev"]);
+            Button(Dictionaries.Commands["Next"]);
             await Send($"Предпочитаемая соц. сети участника: {input}!");
             string btn = await AwaitQuery();
 
-            if (btn == "Назад")
+            if (btn == Dictionaries.Commands["Prev"])
+            {
                 await EnterSocialNetwork();
+            }
             else
+            {
                 await EnterFavouriteBrands();
+            }
         }
 
         [Action]
@@ -261,7 +281,7 @@ namespace PromoterBot
         {
             await Client.SendTextMessageAsync(
                chatId: Context.GetSafeChatId(),
-               text: "Пожалуйста, введите любимые бренды участника",
+               text: Dictionaries.Requests["RequestBrands"],
                replyMarkup: CustomKeyBoards.GetKeyboard(KeyBoardTypes.Default)
             );
 
@@ -275,18 +295,22 @@ namespace PromoterBot
 
             _participant.FavouriteBrands = input;
 
-            Button("Назад");
-            Button("Вперёд");
+            Button(Dictionaries.Commands["Prev"]);
+            Button(Dictionaries.Commands["Next"]);
             await Send($"Любимые бренды участника: {input}!");
             string btn = await AwaitQuery();
 
-            if (btn == "Назад")
+            if (btn == Dictionaries.Commands["Prev"])
+            {
                 await EnterFavouriteBrands();
+            }
             else
+            {
                 await Save();
+            }
         }
 
-        private bool Canceled(string command) => command == "Отмена";
+        private static bool Canceled(string command) => command == Dictionaries.Commands["Cancel"];
 
         private async Task Save()
         {
@@ -299,7 +323,6 @@ namespace PromoterBot
             await _ctx.SaveChangesAsync();
             await Send("Участник успешно добавлен!");
             PushL("Нажмите /start, чтобы добавить нового участника!");
-            return;
         }
 
         [On(Handle.Unknown)]

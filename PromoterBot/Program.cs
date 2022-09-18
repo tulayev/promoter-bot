@@ -12,7 +12,16 @@ namespace PromoterBot
                 services.AddApplicationServices(config);
             }, onRun: async (app, _) =>
             {
-                await ((WebApplication)app).MigrateDatabaseAsync();
+                var castedApp = (WebApplication)app;
+
+                await castedApp.MigrateDatabaseAsync();
+
+                // Heroku needs this!
+                if (!castedApp.Environment.IsDevelopment())
+                {
+                    string port = Environment.GetEnvironmentVariable("PORT");
+                    castedApp.Urls.Add($"http://*:{port}");
+                }
             });
         }
     }

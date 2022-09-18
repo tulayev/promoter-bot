@@ -2,9 +2,9 @@
 
 namespace PromoterBot.Utils
 {
-    public static class AdminActions<T> where T : class
+    public static class AdminActions
     {
-        public static void ExportDataToExcel(List<T> result)
+        public static void ExportDataToExcel<T>(List<T> result) where T : class
         {
             bool showHeader = true;
             var properties = result.First().GetType().GetProperties();

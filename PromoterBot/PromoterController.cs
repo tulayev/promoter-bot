@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using PromoterBot.Data;
 using PromoterBot.Models;
+using PromoterBot.Utils;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
 
@@ -76,16 +77,20 @@ namespace PromoterBot
             _promoter.Name = name;
             _promoter.ChatId = Context.GetChatId().ToString();
 
-            Button("Назад");
-            Button("Вперёд");
+            Button(Dictionaries.Commands["Prev"]);
+            Button(Dictionaries.Commands["Next"]);
             await Send($"Ваше Ф.И.О.: {name}!");
             string btn = await AwaitQuery();
 
 
-            if (btn == "Назад")
+            if (btn == Dictionaries.Commands["Prev"])
+            {
                 await EnterName();
+            }
             else
+            {
                 await EnterCity();
+            }
         }
 
         [Action]
@@ -96,14 +101,16 @@ namespace PromoterBot
 
             _promoter.City = city;
 
-            Button("Назад");
-            Button("Вперёд");
+            Button(Dictionaries.Commands["Prev"]);
+            Button(Dictionaries.Commands["Next"]);
             await Send($"Ваш город: {city}");
             string btn = await AwaitQuery();
             _promoter.City = city;
 
-            if (btn == "Назад")
+            if (btn == Dictionaries.Commands["Prev"])
+            {
                 await EnterCity();
+            }
             else
             {
                 _ctx.Promoters.Add(_promoter);
