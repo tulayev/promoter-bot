@@ -1,8 +1,10 @@
 ﻿using Deployf.Botf;
 using Microsoft.EntityFrameworkCore;
 using PromoterBot.Data;
+using PromoterBot.Dtos;
 using PromoterBot.Models;
 using PromoterBot.Utils;
+using Telegram.Bot;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
 
@@ -17,6 +19,8 @@ namespace PromoterBot
         private readonly IConfiguration _config;
 
         private readonly Promoter _promoter = new();
+
+        private const int PageSize = 6;
 
         public PromoterController(ILogger<Program> logger, DataContext ctx, IConfiguration config)
         {
@@ -71,53 +75,105 @@ namespace PromoterBot
         [Action]
         private async Task EnterName()
         {
-            await Send($"Пожалуйста, введите своё Ф.И.О.");
+            await Client.SendTextMessageAsync(
+               chatId: Context.GetSafeChatId(),
+               text: "Пожалуйста, введите своё Ф.И.О.",
+               replyMarkup: CustomKeyBoards.GetKeyboard(KeyBoardTypes.Default)
+            );
 
-            string name = await AwaitText();
-            _promoter.Name = name;
-            _promoter.ChatId = Context.GetChatId().ToString();
+            string input = await AwaitText();
 
-            Button(Dictionaries.Commands["Prev"]);
-            Button(Dictionaries.Commands["Next"]);
-            await Send($"Ваше Ф.И.О.: {name}!");
-            string btn = await AwaitQuery();
-
-
-            if (btn == Dictionaries.Commands["Prev"])
+            if (!String.IsNullOrEmpty(input))
             {
-                await EnterName();
-            }
-            else
-            {
-                await EnterCity();
+                if (input == Dictionaries.Commands["Prev"])
+                {
+                    await EnterName();
+                }
+                else if (input == Dictionaries.Commands["Cancel"])
+                {
+                    await Start();
+                }
+                else
+                {
+                    _promoter.Name = input;
+                    _promoter.ChatId = Context.GetChatId().ToString();
+                    await ChooseRegion();
+                }
             }
         }
 
         [Action]
-        private async Task EnterCity()
+        private async Task ChooseRegion(int page = 1)
         {
-            await Send($"Пожалуйста, введите свой город.");
-            string city = await AwaitText();
+            var source = _ctx.Regions.Include(r => r.Cities);
+            int count = await source.CountAsync();
+            var regions = await source.Skip((page - 1) * PageSize).Take(PageSize).ToListAsync();
 
-            _promoter.City = city;
+            await Client.SendTextMessageAsync(
+               chatId: Context.GetSafeChatId(),
+               text: Dictionaries.Requests["RequestRegion"],
+               replyMarkup: CustomKeyBoards.GetKeyboard(regions)
+            );
 
-            Button(Dictionaries.Commands["Prev"]);
-            Button(Dictionaries.Commands["Next"]);
-            await Send($"Ваш город: {city}");
-            string btn = await AwaitQuery();
-            _promoter.City = city;
+            var pageDto = new PageDto(count, page, PageSize);
 
-            if (btn == Dictionaries.Commands["Prev"])
+            string input = await AwaitText();
+
+            if (pageDto.HasPreviousPage && input == Dictionaries.Commands["Prev"])
             {
-                await EnterCity();
+                await ChooseRegion(--page);
             }
-            else
+            else if (pageDto.HasNextPage && input == Dictionaries.Commands["Next"])
             {
-                _ctx.Promoters.Add(_promoter);
-                await _ctx.SaveChangesAsync();
-                await Send("Регистрация прошла успешно!");
-                await Start();
+                await ChooseRegion(++page);
             }
+            else if ((!pageDto.HasPreviousPage && input == Dictionaries.Commands["Prev"]) ||
+                (!pageDto.HasNextPage && input == Dictionaries.Commands["Next"]))
+            {
+                await ChooseRegion(page);
+            }
+
+            var chosenRegion = regions.FirstOrDefault(r => r.Name == input);
+
+            await ChooseCity(chosenRegion);
+        }
+
+        [Action]
+        private async Task ChooseCity(Region region, int page = 1)
+        {
+            var source = region.Cities;
+            int count = source.Count;
+            var cities = source.Skip((page - 1) * PageSize).Take(PageSize).ToList();
+
+            await Client.SendTextMessageAsync(
+               chatId: Context.GetSafeChatId(),
+               text: Dictionaries.Requests["RequestCity"],
+               replyMarkup: CustomKeyBoards.GetKeyboard(cities)
+            );
+
+            var pageDto = new PageDto(count, page, PageSize);
+
+            string input = await AwaitText();
+
+            if (pageDto.HasPreviousPage && input == Dictionaries.Commands["Prev"])
+            {
+                await ChooseCity(region, --page);
+            }
+            else if (pageDto.HasNextPage && input == Dictionaries.Commands["Next"])
+            {
+                await ChooseCity(region, ++page);
+            }
+            else if ((!pageDto.HasPreviousPage && input == Dictionaries.Commands["Prev"]) ||
+                (!pageDto.HasNextPage && input == Dictionaries.Commands["Next"]))
+            {
+                await ChooseCity(region, page);
+            }
+
+            _promoter.City = input;
+            _ctx.Promoters.Add(_promoter);
+            await _ctx.SaveChangesAsync();
+            await Send("Регистрация прошла успешно!");
+            await Start();
         }
 
         [On(Handle.Exception)]

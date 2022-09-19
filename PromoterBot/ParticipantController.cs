@@ -1,13 +1,13 @@
 ﻿using Deployf.Botf;
 using Microsoft.EntityFrameworkCore;
 using PromoterBot.Data;
-using PromoterBot.Dtos;
 using PromoterBot.Models;
 using PromoterBot.Utils;
 using System.Text.RegularExpressions;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
+using Telegram.Bot.Types.ReplyMarkups;
 
 namespace PromoterBot
 {
@@ -21,7 +21,7 @@ namespace PromoterBot
         
         private readonly Participant _participant = new();
 
-        private const int PageSize = 6;
+        private readonly List<string> _socialNetworks = new();
 
         public ParticipantController(ILogger<Program> logger, IWebHostEnvironment env, DataContext ctx)
         {
@@ -33,7 +33,11 @@ namespace PromoterBot
         [Action("Добавить участника")]
         public async Task Add()
         {
-            await Send(Dictionaries.Requests["RequestPhoto"]);
+            await Client.SendTextMessageAsync(
+               chatId: Context.GetSafeChatId(),
+               text: Dictionaries.Requests["RequestPhoto"],
+               replyMarkup: new ReplyKeyboardRemove()
+            );
         }
 
         [Action]
@@ -47,26 +51,17 @@ namespace PromoterBot
 
             string input = await AwaitText();
 
-            if (Canceled(input))
+            if (!String.IsNullOrEmpty(input))
             {
-                await Add();
-                return;
-            }
-            
-            _participant.Name = input;
-
-            Button(Dictionaries.Commands["Prev"]);
-            Button(Dictionaries.Commands["Next"]);
-            await Send($"Ф.И.О. участника: {input}!");
-            string btn = await AwaitQuery();
-
-            if (btn == Dictionaries.Commands["Prev"])
-            {
-                await EnterName();
-            }
-            else
-            {
-                await EnterPhoneNumber();
+                if (input == Dictionaries.Commands["Prev"] || input == Dictionaries.Commands["Cancel"])
+                {
+                    await Add();
+                }
+                else
+                {
+                    _participant.Name = input;
+                    await EnterPhoneNumber();
+                }
             }
         }
 
@@ -81,29 +76,28 @@ namespace PromoterBot
 
             string input = await AwaitText();
 
-            if (Canceled(input))
-            {
-                await Add();
-                return;
-            }
-
             string regex = @"(?:\+[9]{2}[8][0-9]{2}[0-9]{3}[0-9]{2}[0-9]{2})";
             var match = Regex.Match(input, regex, RegexOptions.IgnoreCase);
 
-            _participant.PhoneNumber = input;
-
-            Button(Dictionaries.Commands["Prev"]);
-            Button(Dictionaries.Commands["Next"]);
-            await Send($"Номер телефона участника: {input}");
-            string btn = await AwaitQuery();
-
-            if (btn == Dictionaries.Commands["Prev"] || !match.Success)
+            if (!String.IsNullOrEmpty(input))
             {
-                await EnterPhoneNumber();
-            }
-            else
-            {
-                await EnterAge();
+                if (input == Dictionaries.Commands["Prev"])
+                {
+                    await EnterName();
+                }
+                else if (input == Dictionaries.Commands["Cancel"])
+                {
+                    await Add();
+                }
+                else if (!match.Success)
+                {
+                    await EnterPhoneNumber();
+                }
+                else
+                {
+                    _participant.PhoneNumber = input;
+                    await EnterAge();
+                }
             }
         }
 
@@ -118,27 +112,27 @@ namespace PromoterBot
             
             string input = await AwaitText();
 
-            if (Canceled(input))
-            {
-                await Add();
-                return;
-            }
-
             bool isValid = Int32.TryParse(input, out int res);
 
-            Button(Dictionaries.Commands["Prev"]);
-            Button(Dictionaries.Commands["Next"]);
-            await Send($"Возраст участника: {input}!");
-            string btn = await AwaitQuery();
-
-            if (btn == Dictionaries.Commands["Prev"] || !isValid)
+            if (!String.IsNullOrEmpty(input))
             {
-                await EnterAge();
-            }
-            else
-            {
-                _participant.Age = res;
-                await EnterGender();
+                if (input == Dictionaries.Commands["Prev"])
+                {
+                    await EnterPhoneNumber();
+                }
+                else if (input == Dictionaries.Commands["Cancel"])
+                {
+                    await Add();
+                }
+                else if (!isValid)
+                {
+                    await EnterAge();
+                }
+                else
+                {
+                    _participant.Age = res;
+                    await EnterGender();
+                }
             }
         }
 
@@ -153,93 +147,26 @@ namespace PromoterBot
 
             string input = await AwaitText();
 
-            _participant.Gender = input;
-
-            Button(Dictionaries.Commands["Prev"]);
-            Button(Dictionaries.Commands["Next"]);
-            await Send($"Пол участника: {input}!");
-            string btn = await AwaitQuery();
-
-            if (btn == Dictionaries.Commands["Prev"])
+            if (!String.IsNullOrEmpty(input))
             {
-                await EnterGender();
+                if (input == Dictionaries.Commands["Prev"])
+                {
+                    await EnterAge();
+                }
+                else if (input == Dictionaries.Commands["Cancel"])
+                {
+                    await Add();
+                }
+                else if (input != "Женский" && input != "Мужской")
+                {
+                    await EnterGender();
+                }
+                else
+                {
+                    _participant.Gender = input;
+                    await EnterSocialNetwork();
+                }
             }
-            else
-            {
-                await ChooseRegion();
-            }
-        }
-
-        [Action]
-        private async Task ChooseRegion(int page = 1)
-        {
-            var source = _ctx.Regions.Include(r => r.Cities);
-            int count = await source.CountAsync();
-            var regions = await source.Skip((page - 1) * PageSize).Take(PageSize).ToListAsync();
-
-            await Client.SendTextMessageAsync(
-               chatId: Context.GetSafeChatId(),
-               text: Dictionaries.Requests["RequestRegion"],
-               replyMarkup: CustomKeyBoards.GetKeyboard(regions)
-            );
-
-            var pageDto = new PageDto(count, page, PageSize);
-
-            string input = await AwaitText();
-
-            if (pageDto.HasPreviousPage && input == Dictionaries.Commands["Prev"])
-            {
-                await ChooseRegion(--page);
-            }
-            else if (pageDto.HasNextPage && input == Dictionaries.Commands["Next"])
-            {
-                await ChooseRegion(++page);
-            }
-            else if ((!pageDto.HasPreviousPage && input == Dictionaries.Commands["Prev"]) || 
-                (!pageDto.HasNextPage && input == Dictionaries.Commands["Next"]))
-            {
-                await ChooseRegion(page);
-            }
-            
-            var chosenRegion = regions.FirstOrDefault(r => r.Name == input);
-
-            await ChooseCity(chosenRegion);
-        }
-
-        [Action]
-        private async Task ChooseCity(Region region, int page = 1)
-        {
-            var source = region.Cities;
-            int count = source.Count;
-            var cities = source.Skip((page - 1) * PageSize).Take(PageSize).ToList();
-
-            await Client.SendTextMessageAsync(
-               chatId: Context.GetSafeChatId(),
-               text: Dictionaries.Requests["RequestCity"],
-               replyMarkup: CustomKeyBoards.GetKeyboard(cities)
-            );
-
-            var pageDto = new PageDto(count, page, PageSize);
-
-            string input = await AwaitText();
-
-            if (pageDto.HasPreviousPage && input == Dictionaries.Commands["Prev"])
-            {
-                await ChooseCity(region, --page);
-            }
-            else if (pageDto.HasNextPage && input == Dictionaries.Commands["Next"])
-            {
-                await ChooseCity(region, ++page);
-            }
-            else if ((!pageDto.HasPreviousPage && input == Dictionaries.Commands["Prev"]) || 
-                (!pageDto.HasNextPage && input == Dictionaries.Commands["Next"]))
-            {
-                await ChooseCity(region, page);
-            }
-
-            _participant.City = input;
-            
-            await EnterSocialNetwork();
         }
 
         [Action]
@@ -250,30 +177,54 @@ namespace PromoterBot
                text: Dictionaries.Requests["RequestSocialNetwork"],
                replyMarkup: CustomKeyBoards.GetKeyboard(KeyBoardTypes.SocilaNetWorkSelect)
             );
-
+            
             string input = await AwaitText();
 
             if (input == Dictionaries.Commands["Other"])
             {
-                await Send("Введите вручную соц. сеть:");
-                input = await AwaitText();
+                _socialNetworks.Add(await GetManualSocialInput());
             }
 
-            _participant.SocialNetwork = input;
-
-            Button(Dictionaries.Commands["Prev"]);
-            Button(Dictionaries.Commands["Next"]);
-            await Send($"Предпочитаемая соц. сети участника: {input}!");
-            string btn = await AwaitQuery();
-
-            if (btn == Dictionaries.Commands["Prev"])
+            if (!String.IsNullOrEmpty(input))
             {
-                await EnterSocialNetwork();
+                if (input == Dictionaries.Commands["Prev"])
+                {
+                    await EnterGender();
+                }
+                else if (input == Dictionaries.Commands["Cancel"])
+                {
+                    await Add();
+                }
+                else if (input == Dictionaries.Commands["Next"])
+                {
+                    await EnterFavouriteBrands();
+                }
+                else
+                {
+                    _socialNetworks.Add(input);
+
+                    if (_socialNetworks.Contains(Dictionaries.Commands["Other"]))
+                    {
+                        _socialNetworks.Remove(Dictionaries.Commands["Other"]);
+                    }
+
+                    _participant.SocialNetwork = String.Join(',', _socialNetworks);
+                    await EnterSocialNetwork();
+                }
             }
-            else
-            {
-                await EnterFavouriteBrands();
-            }
+        }
+
+        private async Task<string> GetManualSocialInput()
+        {
+            await Client.SendTextMessageAsync(
+               chatId: Context.GetSafeChatId(),
+               text: "Введите вручную соц. сеть!",
+               replyMarkup: new ReplyKeyboardRemove()
+            );
+
+            string input = await AwaitText();
+
+            return input;
         }
 
         [Action]
@@ -287,36 +238,30 @@ namespace PromoterBot
 
             string input = await AwaitText();
 
-            if (Canceled(input))
+            if (!String.IsNullOrEmpty(input))
             {
-                await Add();
-                return;
-            }
-
-            _participant.FavouriteBrands = input;
-
-            Button(Dictionaries.Commands["Prev"]);
-            Button(Dictionaries.Commands["Next"]);
-            await Send($"Любимые бренды участника: {input}!");
-            string btn = await AwaitQuery();
-
-            if (btn == Dictionaries.Commands["Prev"])
-            {
-                await EnterFavouriteBrands();
-            }
-            else
-            {
-                await Save();
+                if (input == Dictionaries.Commands["Prev"])
+                {
+                    await EnterSocialNetwork();
+                }
+                else if (input == Dictionaries.Commands["Cancel"])
+                {
+                    await Add();
+                }
+                else
+                {
+                    _participant.FavouriteBrands = input;
+                    await Save();
+                }
             }
         }
-
-        private static bool Canceled(string command) => command == Dictionaries.Commands["Cancel"];
 
         private async Task Save()
         {
             var promoter = await _ctx.Promoters
                     .FirstOrDefaultAsync(p => p.ChatId == Context.GetChatId().ToString());
 
+            _participant.City = promoter.City;
             _participant.PromoterId = promoter.Id;
 
             _ctx.Participants.Add(_participant);

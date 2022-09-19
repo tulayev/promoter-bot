@@ -28,7 +28,8 @@ namespace PromoterBot.Utils
                     new KeyboardButton[]
                     {
                         new KeyboardButton("Youtube"),
-                        new KeyboardButton(Dictionaries.Commands["Other"])
+                        new KeyboardButton(Dictionaries.Commands["Other"]),
+                        new KeyboardButton(Dictionaries.Commands["Next"])
                     }
                 })
                 {
@@ -53,7 +54,11 @@ namespace PromoterBot.Utils
                 },
                 _ => new ReplyKeyboardMarkup(new[]
                 {
-                    new KeyboardButton(Dictionaries.Commands["Cancel"])
+                    new KeyboardButton[]
+                    {
+                        new KeyboardButton(Dictionaries.Commands["Prev"]),
+                        new KeyboardButton(Dictionaries.Commands["Cancel"])
+                    },
                 })
                 {
                     ResizeKeyboard = true
