@@ -89,7 +89,7 @@ namespace PromoterBot
                 {
                     await EnterName();
                 }
-                else if (input == Dictionaries.Commands["Cancel"])
+                else if (input == Dictionaries.Commands["Cancel"] || input == Dictionaries.Commands["Start"])
                 {
                     await Start();
                 }
@@ -132,10 +132,15 @@ namespace PromoterBot
             {
                 await ChooseRegion(page);
             }
-
-            var chosenRegion = regions.FirstOrDefault(r => r.Name == input);
-
-            await ChooseCity(chosenRegion);
+            else if (input == Dictionaries.Commands["Start"])
+            {
+                await Start();
+            }
+            else
+            {
+                var chosenRegion = regions.FirstOrDefault(r => r.Name == input);
+                await ChooseCity(chosenRegion);
+            }
         }
 
         [Action]
@@ -153,7 +158,7 @@ namespace PromoterBot
 
             var pageDto = new PageDto(count, page, PageSize);
 
-            string input = await AwaitText();
+            string input = await AwaitText(() => _ = Send("Нажмите /start чтобы начать заново"));
 
             if (pageDto.HasPreviousPage && input == Dictionaries.Commands["Prev"])
             {
@@ -168,12 +173,18 @@ namespace PromoterBot
             {
                 await ChooseCity(region, page);
             }
-
-            _promoter.City = input;
-            _ctx.Promoters.Add(_promoter);
-            await _ctx.SaveChangesAsync();
-            await Send("Регистрация прошла успешно!");
-            await Start();
+            else if (input == Dictionaries.Commands["Start"])
+            {
+                await Start();
+            }
+            else
+            {
+                _promoter.City = input;
+                _ctx.Promoters.Add(_promoter);
+                await _ctx.SaveChangesAsync();
+                await Send("Регистрация прошла успешно!");
+                await Start();
+            }
         }
 
         [On(Handle.Exception)]

@@ -13,19 +13,51 @@ namespace PromoterBot.Data
                 Name = "Ташкентская область"
             };
 
+            var namangan = new Region
+            {
+                Id = 2,
+                Name = "Наманганская область"
+            };
+
+            var ferghana = new Region
+            {
+                Id = 3,
+                Name = "Ферганская область"
+            };
+
+            var samarkand = new Region
+            {
+                Id = 4,
+                Name = "Самаркандская область"
+            };
+
+            var bukhara = new Region
+            {
+                Id = 5,
+                Name = "Бухарская область"
+            };
+
+            var navoi = new Region
+            {
+                Id = 6,
+                Name = "Навоийская область"
+            };
+
+            var andijan = new Region
+            {
+                Id = 7,
+                Name = "Андижанская область"
+            };
+
             var regions = new List<Region>
             {
                 tashkent,
-                new Region
-                {
-                    Id = 2,
-                    Name = "Самаркандская область"
-                },
-                new Region
-                {
-                    Id = 3,
-                    Name = "Андижанская область"
-                },
+                namangan,
+                ferghana,
+                samarkand,
+                bukhara,
+                navoi,
+                andijan
             };
 
             builder.Entity<Region>().HasData(regions);
@@ -41,22 +73,22 @@ namespace PromoterBot.Data
                 new City
                 {
                     Id = 2,
-                    Name = "Газалкент",
+                    Name = "Янгиюль",
                     RegionId = tashkent.Id
                 },
                 new City
                 {
                     Id = 3,
-                    Name = "Ангрен",
+                    Name = "Назарбек",
                     RegionId = tashkent.Id
                 },
                 new City
                 {
                     Id = 4,
-                    Name = "Алмалык",
+                    Name = "Келес",
                     RegionId = tashkent.Id
-                }
-                ,new City
+                },
+                new City
                 {
                     Id = 5,
                     Name = "Чирчик",
@@ -65,15 +97,39 @@ namespace PromoterBot.Data
                 new City
                 {
                     Id = 6,
-                    Name = "Кибрай",
-                    RegionId = tashkent.Id
+                    Name = "Наманган",
+                    RegionId = namangan.Id
                 },
                 new City
                 {
                     Id = 7,
-                    Name = "Лолшахар",
-                    RegionId = tashkent.Id
+                    Name = "Фергана",
+                    RegionId = ferghana.Id
                 },
+                new City
+                {
+                    Id = 8,
+                    Name = "Самарканд",
+                    RegionId = samarkand.Id
+                },
+                new City
+                {
+                    Id = 9,
+                    Name = "Бухара",
+                    RegionId = bukhara.Id
+                },
+                new City
+                {
+                    Id = 10,
+                    Name = "Навои",
+                    RegionId = navoi.Id
+                },
+                new City
+                {
+                    Id = 11,
+                    Name = "Андижан",
+                    RegionId = andijan.Id
+                }
             };
 
             builder.Entity<City>().HasData(cities);

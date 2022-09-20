@@ -8,6 +8,7 @@
             ["Next"] = "Вперёд",
             ["Other"] = "Другой",
             ["Cancel"] = "Отмена",
+            ["Start"] = "/start",
             ["DownloadPromoters"] = "Скачать таблицу промоутеров",
             ["DownloadParticipants"] = "Скачать таблицу участников",
             ["AddRegion"] = "Добавить регион",

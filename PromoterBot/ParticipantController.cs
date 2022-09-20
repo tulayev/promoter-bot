@@ -85,7 +85,7 @@ namespace PromoterBot
                 {
                     await EnterName();
                 }
-                else if (input == Dictionaries.Commands["Cancel"])
+                else if (input == Dictionaries.Commands["Cancel"] || input == Dictionaries.Commands["Start"])
                 {
                     await Add();
                 }
@@ -120,7 +120,7 @@ namespace PromoterBot
                 {
                     await EnterPhoneNumber();
                 }
-                else if (input == Dictionaries.Commands["Cancel"])
+                else if (input == Dictionaries.Commands["Cancel"] || input == Dictionaries.Commands["Start"])
                 {
                     await Add();
                 }
@@ -153,7 +153,7 @@ namespace PromoterBot
                 {
                     await EnterAge();
                 }
-                else if (input == Dictionaries.Commands["Cancel"])
+                else if (input == Dictionaries.Commands["Cancel"] || input == Dictionaries.Commands["Start"])
                 {
                     await Add();
                 }
@@ -191,7 +191,7 @@ namespace PromoterBot
                 {
                     await EnterGender();
                 }
-                else if (input == Dictionaries.Commands["Cancel"])
+                else if (input == Dictionaries.Commands["Cancel"] || input == Dictionaries.Commands["Start"])
                 {
                     await Add();
                 }
@@ -244,7 +244,7 @@ namespace PromoterBot
                 {
                     await EnterSocialNetwork();
                 }
-                else if (input == Dictionaries.Commands["Cancel"])
+                else if (input == Dictionaries.Commands["Cancel"] || input == Dictionaries.Commands["Start"])
                 {
                     await Add();
                 }
@@ -267,7 +267,7 @@ namespace PromoterBot
             _ctx.Participants.Add(_participant);
             await _ctx.SaveChangesAsync();
             await Send("Участник успешно добавлен!");
-            PushL("Нажмите /start, чтобы добавить нового участника!");
+            await Add();
         }
 
         [On(Handle.Unknown)]
