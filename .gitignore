@@ -218,7 +218,7 @@ project.lock.json
 **/appsettings.json
 
 # Migrations
-**/Migrations
+# **/Migrations
 
 # wwwroot
 **/wwwroot
