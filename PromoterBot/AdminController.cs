@@ -8,6 +8,7 @@ using PromoterBot.Models;
 using PromoterBot.Utils;
 using Telegram.Bot;
 using Telegram.Bot.Types.InputFiles;
+using Telegram.Bot.Types.ReplyMarkups;
 
 namespace PromoterBot
 {
@@ -35,26 +36,43 @@ namespace PromoterBot
                 replyMarkup: CustomKeyBoards.GetKeyboard(KeyBoardTypes.AdminPanel)
             );
 
-            await Import();
+            await HandleCommands();
         }
 
         [Action]
-        private async Task Import()
+        private async Task HandleCommands()
         {
             string command = await AwaitText();
             
             switch (command)
             {
                 case "Скачать таблицу промоутеров":
-                    AdminActions.ExportDataToExcel(await _ctx.Promoters.ToListAsync());
-                    await DownloadFile("data.xlsx");
+                    var promoters = await _ctx.Promoters.ToListAsync();
+
+                    if (promoters.Count > 0)
+                    {
+                        AdminActions.ExportDataToExcel(promoters);
+                        await DownloadFile("data.xlsx");
+                    }
+                    else
+                    {
+                        await Send("Нет зарегестрированных промоутеров");
+                    }
                     break;
                 case "Скачать таблицу участников":
                     var participants = await _ctx.Participants
                         .ProjectTo<ParticipantDto>(_mapper.ConfigurationProvider)
                         .ToListAsync();
-                    AdminActions.ExportDataToExcel(participants);
-                    await DownloadFile("data.xlsx");
+
+                    if (participants.Count > 0)
+                    {
+                        AdminActions.ExportDataToExcel(participants);
+                        await DownloadFile("data.xlsx");
+                    }
+                    else
+                    {
+                        await Send("Нет зарегестрированных участников");
+                    }
                     break;
                 case "Добавить регион":
                     await AddRegion();
@@ -78,18 +96,29 @@ namespace PromoterBot
         [Action]
         private async Task AddRegion()
         {
-            await Send("Введите название региона:");
+            await Client.SendTextMessageAsync(
+               chatId: Context.GetSafeChatId(),
+               text: "Введите название региона:",
+               replyMarkup: new ReplyKeyboardRemove()
+            );
+
             string input = await AwaitText();
 
             if (String.IsNullOrEmpty(input)) 
             {
                 await AddRegion();
             }
-
-            _ctx.Regions.Add(new Region { Name = input });
-            await _ctx.SaveChangesAsync();
-            await Send("Регион добавлен!");
-            await Start();
+            else if (input == Dictionaries.Commands["Start"])
+            {
+                await Start();
+            }
+            else
+            {
+                _ctx.Regions.Add(new Region { Name = input });
+                await _ctx.SaveChangesAsync();
+                await Send("Регион добавлен!");
+                await Start();
+            }
         }
 
         [Action]
@@ -122,26 +151,42 @@ namespace PromoterBot
             {
                 await ChooseRegion(page);
             }
-
-            var chosenRegion = regions.FirstOrDefault(r => r.Name == input);
-
-            await AddCity(chosenRegion.Id);
+            else if (input == Dictionaries.Commands["Start"])
+            {
+                await Start();
+            }
+            else
+            {
+                var chosenRegion = regions.FirstOrDefault(r => r.Name == input);
+                await AddCity(chosenRegion.Id);
+            }
         }
 
         private async Task AddCity(int regionId)
         {
-            await Send("Введите название города:");
+            await Client.SendTextMessageAsync(
+               chatId: Context.GetSafeChatId(),
+               text: "Введите название города:",
+               replyMarkup: new ReplyKeyboardRemove()
+            );
+            
             string input = await AwaitText();
 
             if (String.IsNullOrEmpty(input))
             {
                 await AddCity(regionId);
             }
-
-            _ctx.Cities.Add(new City{ Name = input, RegionId = regionId });
-            await _ctx.SaveChangesAsync();
-            await Send("Город добавлен!");
-            await Start();
+            else if (input == Dictionaries.Commands["Start"])
+            {
+                await Start();
+            }
+            else
+            {
+                _ctx.Cities.Add(new City{ Name = input, RegionId = regionId });
+                await _ctx.SaveChangesAsync();
+                await Send("Город добавлен!");
+                await Start();
+            }
         }
 
         [Action]
