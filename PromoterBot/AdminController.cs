@@ -80,11 +80,6 @@ namespace PromoterBot
                 case "Добавить город":
                     await ChooseRegion();
                     break;
-                case "Скачать фотографию участника":
-                    await Send("Введите название фотографии участника. Например: example.jpg");
-                    string input = await AwaitText();
-                    await DownloadFile(System.IO.Path.Combine(_env.WebRootPath, input));
-                    break;
                 default:
                     await Send("Unknown command");
                     break;

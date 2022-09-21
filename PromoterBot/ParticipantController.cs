@@ -1,7 +1,11 @@
-﻿using Deployf.Botf;
+﻿using CloudinaryDotNet;
+using CloudinaryDotNet.Actions;
+using Deployf.Botf;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using PromoterBot.Data;
 using PromoterBot.Models;
+using PromoterBot.Services.Cloudinary;
 using PromoterBot.Utils;
 using System.Text.RegularExpressions;
 using Telegram.Bot;
@@ -21,13 +25,23 @@ namespace PromoterBot
         
         private readonly Participant _participant = new();
 
+        private readonly Cloudinary _cloudinary;
+
         private readonly List<string> _socialNetworks = new();
 
-        public ParticipantController(ILogger<Program> logger, IWebHostEnvironment env, DataContext ctx)
+        public ParticipantController(ILogger<Program> logger, IWebHostEnvironment env, DataContext ctx, IOptions<CloudinarySettings> config)
         {
             _logger = logger;
             _env = env;
             _ctx = ctx;
+
+            var account = new Account(
+                config.Value.CloudName,
+                config.Value.ApiKey,
+                config.Value.ApiSecret
+            );
+
+            _cloudinary = new Cloudinary(account);
         }
 
         [Action("Добавить участника")]
@@ -267,7 +281,8 @@ namespace PromoterBot
             _ctx.Participants.Add(_participant);
             await _ctx.SaveChangesAsync();
             await Send("Участник успешно добавлен!");
-            await Add();
+            PushL("Нажмите на кнопку, чтобы добавить участника!");
+            RowKButton(Q(Add));
         }
 
         [On(Handle.Unknown)]
@@ -278,7 +293,18 @@ namespace PromoterBot
             if (document is null)
                 return;
 
-            _participant.Image = await GetUploadedImagePath(document);
+            string filename = await GetUploadedImagePath(document);
+            string filepath = System.IO.Path.Combine(_env.WebRootPath, filename);
+
+            var result = await _cloudinary.UploadAsync(new ImageUploadParams
+            {
+                File = new FileDescription(filename, filepath)
+            });
+
+            _participant.Image = result.SecureUrl.ToString();
+
+            if (System.IO.File.Exists(filepath))
+                System.IO.File.Delete(filepath);
 
             await EnterName();
 
@@ -293,7 +319,6 @@ namespace PromoterBot
             string filePath = System.IO.Path.Combine(_env.WebRootPath, fileName);
             await using var fs = new FileStream(filePath, FileMode.Create);
             await Context.Bot.Client.DownloadFileAsync(file.FilePath!, fs);
-
             return fileName;
         }
 

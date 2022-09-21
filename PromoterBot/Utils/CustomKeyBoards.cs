@@ -45,8 +45,7 @@ namespace PromoterBot.Utils
                     new KeyboardButton[]
                     {
                         new KeyboardButton(Dictionaries.Commands["AddRegion"]),
-                        new KeyboardButton(Dictionaries.Commands["AddCity"]),
-                        new KeyboardButton(Dictionaries.Commands["DownloadPhoto"])
+                        new KeyboardButton(Dictionaries.Commands["AddCity"])
                     },
                 })
                 {
