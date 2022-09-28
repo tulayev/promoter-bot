@@ -18,13 +18,10 @@ namespace PromoterBot
         
         private readonly IMapper _mapper;
 
-        private readonly IWebHostEnvironment _env;
-
-        public AdminController(DataContext ctx, IMapper mapper, IWebHostEnvironment env)
+        public AdminController(DataContext ctx, IMapper mapper)
         {
             _ctx = ctx;
             _mapper = mapper;
-            _env = env; 
         }
 
         [Action("Панел админа")]
@@ -58,6 +55,7 @@ namespace PromoterBot
                     {
                         await Send("Нет зарегестрированных промоутеров");
                     }
+                    await Start();
                     break;
                 case "Скачать таблицу участников":
                     var participants = await _ctx.Participants
@@ -73,19 +71,27 @@ namespace PromoterBot
                     {
                         await Send("Нет зарегестрированных участников");
                     }
+                    await Start();
                     break;
                 case "Добавить регион":
                     await AddRegion();
+                    await Start();
                     break;
                 case "Добавить город":
                     await ChooseRegion();
+                    await Start();
                     break;
-                default:
-                    await Send("Unknown command");
+                case "Добавить участника":
+                    AddParticpant();
                     break;
             }
+        }
 
-            await Start();
+        [Action]
+        private void AddParticpant()
+        {
+            PushL("Нажмите на кнопку, чтобы добавить участника!");
+            RowKButton(Q<ParticipantController>(c => c.Add));
         }
 
         [Action]

@@ -17,17 +17,41 @@ namespace PromoterBot.Utils
                 {
                     ResizeKeyboard = true
                 },
+                KeyBoardTypes.Decision => new ReplyKeyboardMarkup(new[]
+                {
+                    new KeyboardButton("Да"),
+                    new KeyboardButton("Нет")
+                })
+                {
+                    ResizeKeyboard = true
+                },
                 KeyBoardTypes.SocilaNetWorkSelect => new ReplyKeyboardMarkup(new[]
                 {
                     new KeyboardButton[]
                     {
-                        new KeyboardButton("Telegram"),
                         new KeyboardButton("Facebook"),
                         new KeyboardButton("Instagram")
                     },
                     new KeyboardButton[]
                     {
                         new KeyboardButton("Youtube"),
+                        new KeyboardButton(Dictionaries.Commands["Other"]),
+                        new KeyboardButton(Dictionaries.Commands["Next"])
+                    }
+                })
+                {
+                    ResizeKeyboard = true
+                },
+                KeyBoardTypes.BrandSelect => new ReplyKeyboardMarkup(new[]
+                {
+                    new KeyboardButton[]
+                    {
+                        new KeyboardButton("Persil"),
+                        new KeyboardButton("Ariel")
+                    },
+                    new KeyboardButton[]
+                    {
+                        new KeyboardButton("Vanish"),
                         new KeyboardButton(Dictionaries.Commands["Other"]),
                         new KeyboardButton(Dictionaries.Commands["Next"])
                     }
@@ -45,7 +69,8 @@ namespace PromoterBot.Utils
                     new KeyboardButton[]
                     {
                         new KeyboardButton(Dictionaries.Commands["AddRegion"]),
-                        new KeyboardButton(Dictionaries.Commands["AddCity"])
+                        new KeyboardButton(Dictionaries.Commands["AddCity"]),
+                        new KeyboardButton(Dictionaries.Commands["AddParticipant"])
                     },
                 })
                 {
@@ -83,5 +108,5 @@ namespace PromoterBot.Utils
         }
     }
 
-    public enum KeyBoardTypes { Default, GenderSelect, SocilaNetWorkSelect, AdminPanel }
+    public enum KeyBoardTypes { Default, GenderSelect, SocilaNetWorkSelect, BrandSelect, AdminPanel, Decision }
 }

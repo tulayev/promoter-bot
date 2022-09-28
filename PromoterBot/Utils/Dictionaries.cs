@@ -12,7 +12,8 @@
             ["DownloadPromoters"] = "Скачать таблицу промоутеров",
             ["DownloadParticipants"] = "Скачать таблицу участников",
             ["AddRegion"] = "Добавить регион",
-            ["AddCity"] = "Добавить город"
+            ["AddCity"] = "Добавить город",
+            ["AddParticipant"] = "Добавить участника"
         };
 
         public static Dictionary<string, string> Requests => new()

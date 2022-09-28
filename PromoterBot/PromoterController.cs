@@ -6,6 +6,7 @@ using PromoterBot.Models;
 using PromoterBot.Utils;
 using Telegram.Bot;
 using Telegram.Bot.Types.Enums;
+using Telegram.Bot.Types.InputFiles;
 using Telegram.Bot.Types.ReplyMarkups;
 
 namespace PromoterBot
@@ -34,7 +35,9 @@ namespace PromoterBot
         {
             var promoters = await _ctx.Promoters.ToListAsync();
 
-            if (_config["AdminId"] == Context.GetChatId().ToString())
+            var admins = _config.GetSection("Admins").Get<string[]>();
+
+            if (admins.Contains(Context.GetChatId().ToString()))
             {
                 PushL("Нажмите на кнопку, чтобы войти в панель админа");
                 RowKButton(Q<AdminController>(c => c.Start));
@@ -65,8 +68,14 @@ namespace PromoterBot
             if (contact is null)
                 return;
 
-            await Send($"Ваш номер: {contact.PhoneNumber}");
-            _promoter.PhoneNumber = contact.PhoneNumber;
+            string number = contact.PhoneNumber;
+
+            if (!number.Contains('+'))
+                number = number.Insert(0, "+");
+
+            await Send($"Ваш номер: {number}");
+
+            _promoter.PhoneNumber = number;
 
             await EnterName();
             Context.StopHandling(); 
@@ -180,9 +189,33 @@ namespace PromoterBot
             else
             {
                 _promoter.City = input;
+                await Accept();
+            }
+        }
+
+        private async Task Accept()
+        {
+            await Client.SendTextMessageAsync(
+               chatId: Context.GetSafeChatId(),
+               text: "Вы согласны с нашими условиями?",
+               replyMarkup: CustomKeyBoards.GetKeyboard(KeyBoardTypes.Decision)
+            );
+
+            string filename = "ДОГОВОР_О_ПОЛНОЙ_ИНДИВИДУАЛЬНОЙ_МАТЕРИАЛЬНОЙ_ОТВЕТСТВЕННОСТИ.docx";
+            using var stream = File.OpenRead(filename);
+            await Context.Bot.Client.SendDocumentAsync(Context.GetSafeChatId(), new InputOnlineFile(stream, filename));
+
+            string input = await AwaitText();
+
+            if (input == "Да")
+            {
                 _ctx.Promoters.Add(_promoter);
                 await _ctx.SaveChangesAsync();
                 await Send("Регистрация прошла успешно!");
+                await Start();
+            }    
+            else
+            {
                 await Start();
             }
         }

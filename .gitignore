@@ -220,6 +220,11 @@ project.lock.json
 # Migrations
 # **/Migrations
 
+# Other files
+**/*.doc
+**/*.docx
+**/*.xlsx
+
 #PublishProfiles
 **/Properties/PublishProfiles
 

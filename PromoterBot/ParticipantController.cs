@@ -27,7 +27,9 @@ namespace PromoterBot
 
         private readonly Cloudinary _cloudinary;
 
-        private readonly List<string> _socialNetworks = new();
+        private readonly List<string> _socials = new();
+
+        private readonly List<string> _brands = new();
 
         public ParticipantController(ILogger<Program> logger, IWebHostEnvironment env, DataContext ctx, IOptions<CloudinarySettings> config)
         {
@@ -35,33 +37,49 @@ namespace PromoterBot
             _env = env;
             _ctx = ctx;
 
-            var account = new Account(
-                config.Value.CloudName,
-                config.Value.ApiKey,
-                config.Value.ApiSecret
+            _cloudinary = new Cloudinary(
+                new Account(
+                    config.Value.CloudName,
+                    config.Value.ApiKey,
+                    config.Value.ApiSecret
+                )
             );
-
-            _cloudinary = new Cloudinary(account);
         }
 
         [Action("Добавить участника")]
         public async Task Add()
         {
-            await Client.SendTextMessageAsync(
-               chatId: Context.GetSafeChatId(),
-               text: Dictionaries.Requests["RequestPhoto"],
-               replyMarkup: new ReplyKeyboardRemove()
-            );
+            //await Send(Dictionaries.Requests["RequestPhoto"]);
+
+            PushL(Dictionaries.Requests["RequestName"]);
+            KButton(Dictionaries.Commands["Prev"]);
+            KButton(Dictionaries.Commands["Cancel"]);
+
+            string input = await AwaitText(); 
+
+            // Do smth with user input
+
+            await EnterName(); // Next step
+        }
+
+        [Action]
+        void Test()
+        {
+            
         }
 
         [Action]
         private async Task EnterName()
         {
-            await Client.SendTextMessageAsync(
-               chatId: Context.GetSafeChatId(),
-               text: Dictionaries.Requests["RequestName"],
-               replyMarkup: CustomKeyBoards.GetKeyboard(KeyBoardTypes.Default)
-            );
+            //await Client.SendTextMessageAsync(
+            //   chatId: Context.GetSafeChatId(),
+            //   text: Dictionaries.Requests["RequestName"],
+            //   replyMarkup: CustomKeyBoards.GetKeyboard(KeyBoardTypes.Default)
+            //);
+
+            //PushL(Dictionaries.Requests["RequestName"]);
+            //KButton(Dictionaries.Commands["Prev"]);
+            //KButton(Dictionaries.Commands["Cancel"]);
 
             string input = await AwaitText();
 
@@ -196,7 +214,7 @@ namespace PromoterBot
 
             if (input == Dictionaries.Commands["Other"])
             {
-                _socialNetworks.Add(await GetManualSocialInput());
+                _socials.Add(await GetManualSocialInput());
             }
 
             if (!String.IsNullOrEmpty(input))
@@ -215,14 +233,14 @@ namespace PromoterBot
                 }
                 else
                 {
-                    _socialNetworks.Add(input);
+                    _socials.Add(input);
 
-                    if (_socialNetworks.Contains(Dictionaries.Commands["Other"]))
+                    if (_socials.Contains(Dictionaries.Commands["Other"]))
                     {
-                        _socialNetworks.Remove(Dictionaries.Commands["Other"]);
+                        _socials.Remove(Dictionaries.Commands["Other"]);
                     }
 
-                    _participant.SocialNetwork = String.Join(',', _socialNetworks);
+                    _participant.SocialNetwork = String.Join(',', _socials);
                     await EnterSocialNetwork();
                 }
             }
@@ -232,7 +250,7 @@ namespace PromoterBot
         {
             await Client.SendTextMessageAsync(
                chatId: Context.GetSafeChatId(),
-               text: "Введите вручную соц. сеть!",
+               text: "Введите название",
                replyMarkup: new ReplyKeyboardRemove()
             );
 
@@ -247,10 +265,15 @@ namespace PromoterBot
             await Client.SendTextMessageAsync(
                chatId: Context.GetSafeChatId(),
                text: Dictionaries.Requests["RequestBrands"],
-               replyMarkup: CustomKeyBoards.GetKeyboard(KeyBoardTypes.Default)
+               replyMarkup: CustomKeyBoards.GetKeyboard(KeyBoardTypes.BrandSelect)
             );
 
             string input = await AwaitText();
+
+            if (input == Dictionaries.Commands["Other"])
+            {
+                _brands.Add(await GetManualSocialInput());
+            }
 
             if (!String.IsNullOrEmpty(input))
             {
@@ -262,10 +285,21 @@ namespace PromoterBot
                 {
                     await Add();
                 }
+                else if (input == Dictionaries.Commands["Next"])
+                {
+                    await Save();
+                }
                 else
                 {
-                    _participant.FavouriteBrands = input;
-                    await Save();
+                    _brands.Add(input);
+
+                    if (_brands.Contains(Dictionaries.Commands["Other"]))
+                    {
+                        _brands.Remove(Dictionaries.Commands["Other"]);
+                    }
+
+                    _participant.FavouriteBrands = String.Join(',', _brands);
+                    await EnterFavouriteBrands();
                 }
             }
         }
@@ -275,8 +309,17 @@ namespace PromoterBot
             var promoter = await _ctx.Promoters
                     .FirstOrDefaultAsync(p => p.ChatId == Context.GetChatId().ToString());
 
-            _participant.City = promoter.City;
-            _participant.PromoterId = promoter.Id;
+            if (promoter == null)
+            {
+                _participant.City = "Admin";
+                _participant.PromoterId = 0;
+            }
+            else
+            {
+                _participant.City = promoter.City;
+                _participant.PromoterId = promoter.Id;
+            }
+
 
             _ctx.Participants.Add(_participant);
             await _ctx.SaveChangesAsync();
@@ -291,7 +334,12 @@ namespace PromoterBot
             var document = Context.Update.Message?.Document;
 
             if (document is null)
+            {
+                await Send("Пожалуйста, отправьте фото участника файлом, а не картинкой!");
                 return;
+            }
+
+            await Send("Подождите, картинка загружается...");
 
             string filename = await GetUploadedImagePath(document);
             string filepath = System.IO.Path.Combine(_env.WebRootPath, filename);

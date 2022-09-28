@@ -9,9 +9,8 @@ namespace PromoterBot.Extensions
         public static IServiceCollection AddApplicationServices(this IServiceCollection services, IConfiguration config)
         {
             services.AddDbContext<DataContext>(options => {
-                options.UseMySql(
-                    config.GetConnectionString("Default"),
-                    new MySqlServerVersion(new Version(8, 0, 29))
+                options.UseSqlite(
+                    config.GetConnectionString("Default")
                 );
             });
 
