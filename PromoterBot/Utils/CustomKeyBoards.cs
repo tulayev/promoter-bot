@@ -108,5 +108,13 @@ namespace PromoterBot.Utils
         }
     }
 
-    public enum KeyBoardTypes { Default, GenderSelect, SocilaNetWorkSelect, BrandSelect, AdminPanel, Decision }
+    public enum KeyBoardTypes 
+    { 
+        Default, 
+        GenderSelect, 
+        SocilaNetWorkSelect, 
+        BrandSelect, 
+        AdminPanel, 
+        Decision 
+    }
 }

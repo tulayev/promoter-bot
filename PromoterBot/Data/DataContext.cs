@@ -5,6 +5,11 @@ namespace PromoterBot.Data
 {
     public class DataContext : DbContext
     {
+        public DbSet<Promoter> Promoters { get; set; }
+        public DbSet<Participant> Participants { get; set; }
+        public DbSet<Region> Regions { get; set; }
+        public DbSet<City> Cities { get; set; }
+
         public DataContext(DbContextOptions<DataContext> options) : base(options)
         {
         }
@@ -16,13 +21,5 @@ namespace PromoterBot.Data
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(Program).Assembly);
             Seed.SeedInitialData(modelBuilder);
         }
-
-        public DbSet<Promoter> Promoters { get; set; }
-        
-        public DbSet<Participant> Participants { get; set; }
-
-        public DbSet<Region> Regions { get; set; }
-
-        public DbSet<City> Cities { get; set; }
     }
 }

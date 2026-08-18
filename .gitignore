@@ -212,13 +212,6 @@ project.lock.json
 
 # Output folder used by Webpack or other FE stuff
 **/node_modules/*
-#**/wwwroot/*
-
-# Settings file
-**/appsettings.json
-
-# Migrations
-# **/Migrations
 
 # Other files
 **/*.doc
@@ -227,14 +220,6 @@ project.lock.json
 
 #PublishProfiles
 **/Properties/PublishProfiles
-
-# wwwroot
-**/wwwroot
-
-# SQLite db stuff
-**/*.db
-**/*.db-shm
-**/*.db-wal
 
 # SpecFlow specific
 *.feature.cs

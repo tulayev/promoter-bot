@@ -2,9 +2,8 @@
 {
     public class PageDto
     {
-        public int PageNumber { get; private set; }
-        
-        public int TotalPages { get; private set; }
+        public int PageNumber { get; }
+        public int TotalPages { get; }
 
         public PageDto(int count, int pageNumber, int pageSize)
         {
@@ -16,7 +15,7 @@
         {
             get
             {
-                return (PageNumber > 1);
+                return PageNumber > 1;
             }
         }
 
@@ -24,7 +23,7 @@
         {
             get
             {
-                return (PageNumber < TotalPages);
+                return PageNumber < TotalPages;
             }
         }
     }

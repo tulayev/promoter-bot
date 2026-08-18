@@ -21,6 +21,7 @@ namespace PromoterBot.Extensions
                     logger.LogError(ex, "An error occurred while migrating the database.");
                 }
             }
+
             return app;
         }
     }
